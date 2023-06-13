@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Webcam Video Feed</title>
+    <style>
+      video {
+        display: block;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Webcam Video Feed</h1>
+    <video id="videoElement" autoplay></video>
+    <script>
+      var video = document.getElementById("videoElement");
+
+      if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then(function (stream) {
+            video.srcObject = stream;
+          })
+          .catch(function (error) {
+            console.log("Error accessing the webcam: " + error.message);
+          });
+      } else {
+        console.log("Webcam access not supported");
+      }
+    </script>
+  </body>
+</html>

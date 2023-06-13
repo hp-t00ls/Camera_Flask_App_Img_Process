@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Webcam Stream</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 50px auto;
+            max-width: 700px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        h2 {
+            color:#333;
+            text-align: center;
+        }
+
+        #container {
+            border: 10px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 650px;
+        }
+
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            background-color: #666;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            margin: 5px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Video Streaming</h1>
+    
+    <div id="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2 text-center">
+                <h2 class="mt-5">Traducteur de signe</h2>
+                <video id="videoElement" autoplay></video>
+                
+                <form method="post" action="{{ url_for('video_feed') }}" class="button-container">
+                    <div class="d-flex justify-content-center"></div>
+                    <input type="submit" value="Stop/Start" name="stop" class="button-container button " />
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var video = document.getElementById("videoElement");
+        var stream;
+
+        function sendVideoFrame() {
+            var canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            var dataURL = canvas.toDataURL('image/jpeg');
+
+            $.ajax({
+                type: 'POST',
+                url: '/video_feed',
+                data: dataURL,
+                success: function (response) {
+                    console.log(response);
+                }
+            });
+        }
+
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices
+                .getUserMedia({ video: true })
+                .then(function (mediaStream) {
+                    video.srcObject = mediaStream;
+                    stream = mediaStream;
+                    setInterval(sendVideoFrame, 100); // Send video frames every 100 milliseconds
+                })
+                .catch(function (error) {
+                    console.log("Error accessing the webcam: " + error.message);
+                });
+        } else {
+            console.log("Webcam access not supported");
+        }
+    </script>
+</body>
+</html>

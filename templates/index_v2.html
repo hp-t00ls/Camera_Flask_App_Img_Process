@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Feed Upload</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f1f1f1;
+        }
+
+        .app-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: fit-content;
+            max-width: 400px; /* Adjust as needed */
+            height: auto; /* Adjust as needed */
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        #video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 150%; /* 4:3 aspect ratio */
+            overflow: hidden;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #capture {
+            padding: 0;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        #capture:hover {
+            background-color: #45a049;
+        }
+
+        #capture:focus {
+            outline: none;
+        }
+
+        #capture i {
+            font-size: 32px;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1>HEARE : Traducteur LDS</h1>
+        <div id="video-container">
+            <video id="video" autoplay></video>
+            <button id="capture" tabindex="0">
+                <i class="fas fa-hand-paper"></i>
+            </button>
+        </div>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <div id="status"></div>
+        <div class="signature">
+            Created by HEARE 
+        </div>
+    </div>
+
+    <script>
+        // Get access to the camera and show the video stream
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function(stream) {
+                var video = document.getElementById('video');
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function(error) {
+                console.log('Error accessing the camera: ', error);
+            });
+
+        // Capture the video frame and send it to the Flask server
+        var captureButton = document.getElementById('capture');
+        captureButton.addEventListener('click', function() {
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = video.videoWidth; // Set canvas width to match video frame width
+            canvas.height = video.videoHeight; // Set canvas height to match video frame height
+            context.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw the resized video frame to the canvas
+            canvas.toBlob(function(blob) {
+                var formData = new FormData();
+                formData.append('file', blob, 'capture.png');
+                fetch('/upload', { method: 'POST', body: formData })
+                    .then(function(response) {
+                        if (response.ok) {
+                            document.getElementById('status').textContent = 'Upload successful!';
+                        } else {
+                            document.getElementById('status').textContent = 'Upload failed!';
+                        }
+                    })
+                    .catch(function(error) {
+                        console.log('Error during upload: ', error);
+                        document.getElementById('status').textContent = 'Error during upload. Please try again.';
+                    });
+            }, 'image/png');
+        });
+    </script>
+</body>
+</html>
